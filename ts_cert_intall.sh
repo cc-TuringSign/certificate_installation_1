@@ -9,14 +9,27 @@ CACERTS_PASSWORD=changeit
 CACERTS_OPTION="-cacerts"
 JAVA_CACERTS=
 
+function CheckCommand()
+{
+    if command -v $1 &> /dev/null; then
+        echo -n
+    else
+        echo "Command does not exist ($1)"
+        exit
+    fi
+}
+
 # For java version 1.8 and below
 #   -cacerts option is not supported.
 function CheckCacertsOption()
 {
+    CheckCommand java
+
     local JAVA_VERSION=$(java -version 2>&1 | grep version | awk -F '"' '{print $2}')
     local JAVA_VERSION_FIRST=$(echo -n $JAVA_VERSION |awk -F '.' '{print $1}')
     local JAVA_VERSION_SECOND=$(echo -n $JAVA_VERSION |awk -F '.' '{print $2}')
 
+    echo "Current JAVA Version [$JAVA_VERSION]"
     if [ $JAVA_VERSION_FIRST -eq 1 ];then
         if [ $JAVA_VERSION_SECOND -le 8 ];then
             SetJavaCerts
@@ -67,6 +80,8 @@ function SetJavaCerts()
 # Check Root Certificate
 function IsExistRootCA()
 {
+    CheckCommand keytool
+
     EXIST_ROOT=`keytool -list $CACERTS_OPTION -storepass $CACERTS_PASSWORD |grep $ROOTCA_ALIAS1`
     if [[ -z "$EXIST_ROOT" ]];then
         EXIST_ROOT=`keytool -list $CACERTS_OPTION -storepass $CACERTS_PASSWORD |grep $ROOTCA_ALIAS2`
